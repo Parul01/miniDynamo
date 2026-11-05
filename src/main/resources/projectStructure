@@ -1,0 +1,27 @@
+minidynamo/
+│
+├── cluster/
+│   ├── Node.java
+│   └── NodeBootstrap.java
+│
+├── transport/
+│   ├── Transport.java
+│   ├── TransportImpl.java
+│   ├── Request.java
+│   ├── Response.java
+│   ├── RequestHandler.java
+│   │
+│   ├── request/
+│   │   ├── WriteReplicaRequest.java
+│   │   └── ReadReplicaRequest.java
+│   │
+│   └── response/
+│       ├── WriteReplicaResponse.java
+│       └── ReadReplicaResponse.java
+│
+├── replication/
+│   ├── WriteReplicaHandler.java
+│   └── ReadReplicaHandler.java
+│
+└── storage/
+    └── StorageEngine.java
