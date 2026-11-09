@@ -37,6 +37,7 @@ public class WALService {
         startup();
     }
 
+    // TODO: need to make it synchronized
     public void put(String key, VersionedValue value) throws IOException {
 
         long seqNo = globalSeqNo.incrementAndGet();
@@ -53,7 +54,7 @@ public class WALService {
         walWriter.append(entry);
 
         // write to db
-        kvStore.put(key, value);
+        kvStore.put(key, value); // db is concurrent hashmap so no need of synchronized block
     }
 
     // creates new txnId

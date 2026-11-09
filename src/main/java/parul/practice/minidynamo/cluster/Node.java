@@ -11,7 +11,7 @@ public class Node {
 
     public Node(String id){
         this.id = id;
-        this.counter.set(0);
+        this.counter = new AtomicLong(0);
         virtualNodeList = new ArrayList<>();
         // add virtual nodes;
 
@@ -37,5 +37,15 @@ public class Node {
 
     public Long setCounter(){
         return counter.incrementAndGet();
+    }
+    public synchronized Long setCounter(Long counter){
+
+        if(counter > this.counter.get()){
+            this.counter.set(counter);
+        }else{
+            setCounter();
+        }
+
+        return this.counter.get();
     }
 }

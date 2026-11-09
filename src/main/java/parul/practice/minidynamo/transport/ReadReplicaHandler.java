@@ -11,7 +11,7 @@ public class ReadReplicaHandler implements RequestHandler{
     }
 
     @Override
-    public void handle(Request request) {
+    public Response handle(Request request) {
         // handle replica reads
 
     }

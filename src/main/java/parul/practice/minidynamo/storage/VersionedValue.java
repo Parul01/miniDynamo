@@ -20,6 +20,13 @@ public final class VersionedValue {
         return this.nodeId.compareTo(other.nodeId) > 0;   // equal counters: node id decides
     }
 
+//    public synchronized boolean compareAndSet(VersionedValue other){
+//        if(other == null) return true;
+//        if(this.counter < other.counter){
+//            this.
+//        }
+//    }
+
     @Override public String toString() { return value + "@v" + counter; }
 
 

@@ -1,6 +1,8 @@
 package parul.practice.minidynamo.transport;
 
+import java.io.IOException;
+
 public interface RequestHandler {
 
-    public void handle(Request request);
+    public Response handle(Request request) throws IOException;
 }

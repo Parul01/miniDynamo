@@ -1,4 +1,7 @@
 package parul.practice.minidynamo.transport;
 
-public class Response {
+;
+
+public interface Response {
+
 }
