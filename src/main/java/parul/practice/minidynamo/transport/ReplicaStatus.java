@@ -1,6 +1,6 @@
 package parul.practice.minidynamo.transport;
 
-public enum ReplicaWriteStatus{
+public enum ReplicaStatus {
     SUCCEEDED,
     FAILED
 }

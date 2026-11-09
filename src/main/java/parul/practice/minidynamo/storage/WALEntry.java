@@ -6,7 +6,7 @@ public class WALEntry {
     private long seqNo;
     private OperationType operation;
     private String key;
-    private String value;
+    private VersionedValue value;
     private long checkSum;
 
     public WALEntry(Builder builder) {
@@ -36,7 +36,7 @@ public class WALEntry {
         return key;
     }
 
-    public String getValue() {
+    public VersionedValue getValue() {
         return value;
     }
 
@@ -62,7 +62,7 @@ public class WALEntry {
         private long seqNo;
         private OperationType operation;
         private String key;
-        private String value;
+        private VersionedValue value;
         private long checkSum;
 
         public Builder setTxnId(int txnId) {
@@ -87,7 +87,7 @@ public class WALEntry {
             return this;
         }
 
-        public Builder setValue(String value) {
+        public Builder setValue(VersionedValue value) {
             this.value = value;
             return this;
         }

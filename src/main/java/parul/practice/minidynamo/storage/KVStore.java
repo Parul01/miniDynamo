@@ -2,6 +2,7 @@ package parul.practice.minidynamo.storage;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class KVStore {
@@ -21,8 +22,8 @@ public class KVStore {
         DB.remove(key);
     }
 
-    public VersionedValue get(String key){
-        return DB.get(key);
+    public Optional<VersionedValue> get(String key){
+        return Optional.ofNullable(DB.get(key));
     }
 
     // use for testing

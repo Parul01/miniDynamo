@@ -1,17 +1,16 @@
 package parul.practice.minidynamo.cluster;
 
+import parul.practice.minidynamo.transport.RequestRouter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Node {
-    String id;
-    List<VirtualNode> virtualNodeList;
-    AtomicLong counter;
+    private String id;
+    private List<VirtualNode> virtualNodeList;
 
     public Node(String id){
         this.id = id;
-        this.counter = new AtomicLong(0);
+
         virtualNodeList = new ArrayList<>();
         // add virtual nodes;
 
@@ -35,17 +34,4 @@ public class Node {
         return id;
     }
 
-    public Long setCounter(){
-        return counter.incrementAndGet();
-    }
-    public synchronized Long setCounter(Long counter){
-
-        if(counter > this.counter.get()){
-            this.counter.set(counter);
-        }else{
-            setCounter();
-        }
-
-        return this.counter.get();
-    }
 }

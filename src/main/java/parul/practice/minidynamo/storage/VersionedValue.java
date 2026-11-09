@@ -11,6 +11,19 @@ public final class VersionedValue {
         this.nodeId = nodeId;
     }
 
+    @Override
+    public String toString() {
+        return "VersionedValue{" +
+                "value='" + value + '\'' +
+                ", counter=" + counter +
+                ", nodeId='" + nodeId + '\'' +
+                '}';
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
     public String getValue()  { return value; }
     public long getCounter()  { return counter; }
 
@@ -27,7 +40,6 @@ public final class VersionedValue {
 //        }
 //    }
 
-    @Override public String toString() { return value + "@v" + counter; }
 
 
 

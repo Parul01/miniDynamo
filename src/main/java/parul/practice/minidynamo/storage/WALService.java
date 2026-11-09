@@ -6,8 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
-import java.util.Map;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.CRC32;
 
@@ -71,7 +71,7 @@ public class WALService {
                 .setTxnId(currentTxnId)
                 .setOperation(OperationType.DELETE)
                 .setKey(key)
-                .setValue("")
+                .setValue(null)
                 .setCheckSum(checksum).build();
 
         walWriter.append(entry);
@@ -129,7 +129,7 @@ public class WALService {
         return kvStore;
     }
 
-    public VersionedValue get(String key){
+    public Optional<VersionedValue> get(String key){
         return kvStore.get(key);
     }
 }

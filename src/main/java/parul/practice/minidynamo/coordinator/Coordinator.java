@@ -1,34 +1,39 @@
 package parul.practice.minidynamo.coordinator;
 
 import parul.practice.minidynamo.cluster.Node;
+import parul.practice.minidynamo.storage.StorageEngine;
+import parul.practice.minidynamo.storage.VersionGenerator;
 import parul.practice.minidynamo.transport.*;
 import parul.practice.minidynamo.ring.ConsistentHashingRing;
 import parul.practice.minidynamo.storage.VersionedValue;
-import parul.practice.minidynamo.storage.WALService;
 import parul.practice.minidynamo.transport.request.WriteReplicaRequest;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class Coordinator {
-  WALService storageEngine;
-  Transport transport;
-  Node node;
-  ConsistentHashingRing ring;
-  int N = 3; // get it from the config file
-    int W;
-    int R;
+  private final StorageEngine storageEngine;
+  private final Transport transport;
+  private final String nodeId;
+  private final ConsistentHashingRing ring;
+  private VersionGenerator versionGenerator;
+  private final int N = 3;
+  private final int W = 2;
+  private final int R = 2;
 
 
-  public Coordinator(WALService engine, Transport transport, Node node, ConsistentHashingRing ring){
+  public Coordinator(StorageEngine engine, Transport transport, String nodeId, ConsistentHashingRing ring, VersionGenerator versionGenerator){
       this.storageEngine = engine;
       this.transport = transport;
-      this.node = node;
+      this.nodeId = nodeId;
       this.ring = ring;
+      this.versionGenerator = versionGenerator;
   }
 
   private List<Node> getPreferenceList(String key){
@@ -43,13 +48,15 @@ public class Coordinator {
 
       //compute the value using (get on storageEngine) - increment the counter
 //      VersionedValue existing = storageEngine.get(key);
-      Long counter = node.setCounter();
-      VersionedValue v = new VersionedValue(value, counter, node.getId());
+      Long counter = versionGenerator.nextVersion();
+      VersionedValue v = new VersionedValue(value, counter, nodeId);
 
 
 
       //Step 2 send to its own local storage using storageEngine
-      storageEngine.put(key, v); // what if this itself fail?
+      boolean localWriteSucceeded = storageEngine.put(key, v);
+      int initialSuccess = localWriteSucceeded ? 1 : 0;
+      int initialFailure = localWriteSucceeded == false ? 1 : 0;
 
       WriteReplicaRequest request = new WriteReplicaRequest(key, v);
 
@@ -59,18 +66,30 @@ public class Coordinator {
       List<CompletableFuture<Response>> futures = new ArrayList<>();
 
       for(Node n: preferenceList){
-          futures.add(transport.sendAsync(n,request ));
+          if(!n.getId().equals(nodeId)){
+              futures.add(transport.sendAsync(n,request ));
+          }
       }
 
 
       //Step 4 wait for W acks inclduing local storage
-
-      return true;
+      CompletableFuture<Boolean> future = waitForAcks(futures, W, initialSuccess, initialFailure);
+      try{
+          boolean result = future.get(100, TimeUnit.MILLISECONDS);
+          if(result) return true;
+          return false;
+      } catch (ExecutionException e) {
+          throw new RuntimeException(e);
+      } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+      } catch (TimeoutException e) {
+          throw new RuntimeException(e);
+      }
 
   }
 
   public VersionedValue get(String key){
-
+        return null;
   }
 
   private VersionedValue reconcile(String key, List<VersionedValue> values){
@@ -78,30 +97,36 @@ public class Coordinator {
   }
 
   // TODO: yet to think
-  private CompletableFuture<Boolean> waitForAcks(List<CompletableFuture<Response>> futures){
+  private CompletableFuture<Boolean> waitForAcks(List<CompletableFuture<Response>> futures, int acksNeeded, int initialSuccess, int initialFailure){
 
       CompletableFuture<Boolean> quorumResult = new CompletableFuture<>();
+      if(initialSuccess >= acksNeeded){
+          quorumResult.complete(true);
+          return quorumResult;
+      }else if(initialFailure > (N-acksNeeded)){
+          quorumResult.complete(false);
+          return quorumResult;
+      }
 
-      AtomicInteger success = new AtomicInteger(0);
-      AtomicInteger failures = new AtomicInteger(0);
-      boolean flag = false;
+      AtomicInteger success = new AtomicInteger(initialSuccess);
+      AtomicInteger failures = new AtomicInteger(initialFailure);
       for(CompletableFuture<Response> r: futures){
           r.whenComplete(((response, exception) -> {
 
               if(exception != null){
                   failures.incrementAndGet();
               }else{
-                   WriteReplicaResponse wr = (WriteReplicaResponse) response;
-                   if(wr.getStatus().equals(ReplicaWriteStatus.SUCCEEDED)) {
+//                   WriteReplicaResponse wr = (WriteReplicaResponse) response;
+                   if(response.getStatus() == ReplicaStatus.SUCCEEDED) {
                        success.incrementAndGet();
 
                    }else{
                        failures.incrementAndGet();
                    }
               }
-              if (success.get() >= W) {
+              if (success.get() >= acksNeeded) {
                   quorumResult.complete(true);
-              } else if (failures.get() > N - W) {
+              } else if (failures.get() > N - acksNeeded) {
                   quorumResult.complete(false);
               }
           }));

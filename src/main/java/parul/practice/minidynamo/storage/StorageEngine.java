@@ -1,6 +1,7 @@
 package parul.practice.minidynamo.storage;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class StorageEngine {
 
@@ -14,8 +15,8 @@ public class StorageEngine {
         // all put requests to db will go from here, i.e why we need synchronized block
         boolean flag = false;
         synchronized (this){
-            VersionedValue existing = walService.get(key);
-            if(value.isNewerThan(existing)){
+            Optional<VersionedValue> existing = walService.get(key);
+            if(!existing.isPresent() || value.isNewerThan(existing.get())){
                 flag = true;
                 walService.put(key, value);
             }
@@ -23,8 +24,8 @@ public class StorageEngine {
         return flag;
     }
 
-    VersionedValue get(String key){
-        return null;
+    public Optional<VersionedValue> get(String key){
+        return walService.get(key);
     }
 
 

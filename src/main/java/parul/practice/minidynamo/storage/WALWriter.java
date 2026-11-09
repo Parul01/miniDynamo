@@ -26,14 +26,17 @@ public class WALWriter {
 
 
     public void append(WALEntry entry) throws IOException {
+        VersionedValue versionedValue = entry.getValue();
+
         bw.write(entry.getTxnId() + "|" + entry.getSeqNo() + "|");
-
         bw.write(entry.getOperation()+"");
-
         bw.write("|");
         bw.write(escape(entry.getKey()));
         bw.write("|");
-        bw.write(escape(entry.getValue()));
+        bw.write(escape(versionedValue.getValue()));
+        bw.write("|");
+        bw.write(versionedValue.getCounter() + "|");
+        bw.write(escape(versionedValue.getNodeId()));
         bw.write("|" + entry.getCheckSum());
 
         bw.newLine();

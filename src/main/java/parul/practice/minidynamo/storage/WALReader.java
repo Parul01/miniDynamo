@@ -58,7 +58,9 @@ public class WALReader {
                 + Long.parseLong(writes.get(1)) + "|"
                 + OperationType.valueOf(writes.get(2)).name() + "|"
                 + writes.get(3) + "|"
-                + writes.get(4);
+                + writes.get(4) + "|"
+                + writes.get(5) + "|"
+                + writes.get(6);
 
         long crc = computeCheckSum(data);
 
@@ -87,10 +89,10 @@ public class WALReader {
         while ((line = reader.readLine()) != null){
             List<String> writes = splitFields(line);
             try {
-                if(writes.size() != 6) throw new IllegalArgumentException("bad field count");
+                if(writes.size() != 8) throw new IllegalArgumentException("bad field count");
                 txn = Integer.parseInt(writes.get(0));
                 seq = Long.parseLong(writes.get(1));
-                Long.parseLong(writes.get(5));
+                Long.parseLong(writes.get(7));
                 OperationType.valueOf(writes.get(2));
 
 
@@ -108,13 +110,13 @@ public class WALReader {
             mxTxn = Math.max(mxTxn, txn);
 
             validBytes += line.getBytes(StandardCharsets.UTF_8).length+1;
-
+            VersionedValue value = new VersionedValue(writes.get(4), Long.parseLong(writes.get(5)), writes.get(6));
             WALEntry wal = new WALEntry.Builder()
                     .setTxnId(txn)
                     .setSeqNo(seq)
                     .setOperation(OperationType.valueOf(writes.get(2)))
                     .setKey(writes.get(3))
-                    .setValue(writes.get(4))
+                    .setValue(value) // TODO: can be null
                     .build();
 
             if(writes.get(2).equals(OperationType.COMMIT.name())){
