@@ -12,7 +12,7 @@ public class StorageEngine {
     }
 
     public boolean put(String key, VersionedValue value) throws IOException {
-        // all put requests to db will go from here, i.e why we need synchronized block
+        // all put requests to db will go from here, we need synchronized block for compare and set operation to our counter object
         boolean flag = false;
         synchronized (this){
             Optional<VersionedValue> existing = walService.get(key);

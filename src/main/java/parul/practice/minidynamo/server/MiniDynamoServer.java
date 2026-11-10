@@ -17,15 +17,15 @@ public class MiniDynamoServer {
     private final ConsistentHashingRing ring;
     private final VersionGenerator versionGenerator;
 
-    public MiniDynamoServer(Node node, StorageEngine storageEngine, Coordinator coordinator, RequestRouter requestRouter, Transport transport, ConsistentHashingRing ring, VersionGenerator versionGenerator) {
+    public MiniDynamoServer(Node node, StorageEngine storageEngine, Transport transport, ConsistentHashingRing ring) {
         this.node = node;
         this.storageEngine = storageEngine;
-
-        this.requestRouter = requestRouter;
         this.transport = transport;
         this.ring = ring;
         this.versionGenerator = new VersionGenerator();
-        this.coordinator = new Coordinator(storageEngine, transport, node.getId(), ring, versionGenerator);
+        this.coordinator = new Coordinator(storageEngine, transport, node.getId(), ring, this.versionGenerator);
+        this.requestRouter = new RequestRouter(node.getId(),coordinator, transport, ring);
 
     }
+
 }

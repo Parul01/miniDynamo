@@ -15,6 +15,7 @@ public class ReadReplicaHandler implements RequestHandler {
     @Override
     public Response handle(Request request) {
         // handle replica reads
+        return  null;
 
     }
 }

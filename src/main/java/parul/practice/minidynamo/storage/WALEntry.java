@@ -2,16 +2,14 @@ package parul.practice.minidynamo.storage;
 
 public class WALEntry {
 
-    private int txnId;
-    private long seqNo;
-    private OperationType operation;
-    private String key;
-    private VersionedValue value;
-    private long checkSum;
+    private final long seqNo;
+    private final OperationType operation;
+    private final String key;
+    private final VersionedValue value;
+    private final long checkSum;
 
     public WALEntry(Builder builder) {
 
-        txnId = builder.txnId;
         seqNo = builder.seqNo;
         operation = builder.operation;
         key = builder.key;
@@ -20,9 +18,6 @@ public class WALEntry {
 
     }
 
-    public int getTxnId() {
-        return txnId;
-    }
 
     public long getSeqNo() {
         return seqNo;
@@ -47,7 +42,6 @@ public class WALEntry {
     @Override
     public String toString() {
         return "WALEntry{" +
-                "txnId='" + txnId + '\'' +
                 ", seqNo='" + seqNo + '\'' +
                 ", operation=" + operation +
                 ", key='" + key + '\'' +
@@ -58,17 +52,11 @@ public class WALEntry {
 
     public static class Builder{
 
-        private int txnId;
         private long seqNo;
         private OperationType operation;
         private String key;
         private VersionedValue value;
         private long checkSum;
-
-        public Builder setTxnId(int txnId) {
-            this.txnId = txnId;
-            return this;
-        }
 
         public Builder setSeqNo(long seqNo) {
             this.seqNo = seqNo;

@@ -54,46 +54,71 @@ public class WALReader {
 
     private boolean isChecksumValid(List<String> writes) {
 
-        String data = Integer.parseInt(writes.get(0)) + "|"
-                + Long.parseLong(writes.get(1)) + "|"
-                + OperationType.valueOf(writes.get(2)).name() + "|"
+        String data =Long.parseLong(writes.get(0)) + "|"
+                + OperationType.valueOf(writes.get(1)).name() + "|"
+                + writes.get(2) + "|"
                 + writes.get(3) + "|"
                 + writes.get(4) + "|"
-                + writes.get(5) + "|"
-                + writes.get(6);
+                + writes.get(5);
 
         long crc = computeCheckSum(data);
 
-        System.out.println("checksum " +crc);
 
-
-        return crc == Long.parseLong(writes.get(5));
+        return crc == Long.parseLong(writes.get(6));
 
     }
 
 
     public RecoveryResult replay() throws IOException {
         // read from reader
-        Map<Integer, List<WALEntry>> validTxn = new HashMap<>();
-        Set<Integer> allCommittedTxns = new HashSet<>();
+        List<WALEntry> walEntries = new ArrayList<>();
 
         RecoveryResult result = null;
-        int txn = 0;
         long seq = 0;
-        int mxTxn = 0;
         long mxSeq = 0;
         long validBytes = 0;
 
         String line = "";
 
         while ((line = reader.readLine()) != null){
-            List<String> writes = splitFields(line);
+            List<String> writes = null;
+            VersionedValue value = null;
+            OperationType operation;
+
             try {
-                if(writes.size() != 8) throw new IllegalArgumentException("bad field count");
-                txn = Integer.parseInt(writes.get(0));
-                seq = Long.parseLong(writes.get(1));
-                Long.parseLong(writes.get(7));
-                OperationType.valueOf(writes.get(2));
+                writes = splitFields(line);
+                if(writes.size() != 7) throw new IllegalArgumentException("bad field count");
+                seq = Long.parseLong(writes.get(0));
+                Long.parseLong(writes.get(6));
+                operation = OperationType.valueOf(writes.get(1));
+                if (operation == OperationType.PUT) {
+
+                    if (writes.get(5).isEmpty()) {
+                        throw new IllegalArgumentException("Missing node ID");
+                    }
+
+                    value = new VersionedValue(
+                            writes.get(3),
+                            Long.parseLong(writes.get(4)),
+                            writes.get(5)
+                    );
+
+                } else if (operation == OperationType.DELETE) {
+
+                    if (!writes.get(3).isEmpty()
+                            || !writes.get(4).isEmpty()
+                            || !writes.get(5).isEmpty()) {
+                        throw new IllegalArgumentException(
+                                "Unexpected version fields"
+                        );
+                    }
+
+                } else {
+                    throw new IllegalArgumentException(
+                            "Unsupported WAL operation"
+                    );
+                }
+
 
 
             }catch (RuntimeException ex){
@@ -107,52 +132,29 @@ public class WALReader {
             }
 
             mxSeq = Math.max(mxSeq, seq);
-            mxTxn = Math.max(mxTxn, txn);
 
             validBytes += line.getBytes(StandardCharsets.UTF_8).length+1;
-            VersionedValue value = new VersionedValue(writes.get(4), Long.parseLong(writes.get(5)), writes.get(6));
+
+
             WALEntry wal = new WALEntry.Builder()
-                    .setTxnId(txn)
                     .setSeqNo(seq)
-                    .setOperation(OperationType.valueOf(writes.get(2)))
-                    .setKey(writes.get(3))
+                    .setOperation(operation)
+                    .setKey(writes.get(2))
                     .setValue(value) // TODO: can be null
                     .build();
-
-            if(writes.get(2).equals(OperationType.COMMIT.name())){
-                allCommittedTxns.add(txn);
-                continue;
-
-            }
-
-            if(validTxn.get(txn) == null){
-                validTxn.put(txn, new ArrayList<>());
-            }
-
-            validTxn.get(txn).add(wal);
+            walEntries.add(wal);
         }
 
-        Iterator<Map.Entry<Integer, List<WALEntry>>> it = validTxn.entrySet().iterator();
+        walEntries.sort(Comparator.comparing(WALEntry::getSeqNo));
 
-        while(it.hasNext()){
-            Map.Entry<Integer, List<WALEntry>> t = it.next();
-            if(!allCommittedTxns.contains(t.getKey())){
-                it.remove();
-            }
-        }
-
-
-        List<WALEntry> walList = new ArrayList<>();
-        for (List<WALEntry> e : validTxn.values()){
-            walList.addAll(e);
-        }
-
-        walList.sort(Comparator.comparing(WALEntry::getSeqNo));
-
-        result = new RecoveryResult(mxTxn, mxSeq, validBytes, walList);
+        result = new RecoveryResult(mxSeq, validBytes, walEntries);
 
         return result;
 
+    }
+
+    public void close() throws IOException {
+        reader.close();
     }
 
 

@@ -1,0 +1,5 @@
+1|PUT|name|Alex|1|node-1|594615790
+2|PUT|age|13|1|node-1|2528928647
+3|PUT|location|Delhi|1|node-1|862082803
+4|PUT|name|Alex|2|node-1|1172169077
+5|DELETE|name||||1665045648

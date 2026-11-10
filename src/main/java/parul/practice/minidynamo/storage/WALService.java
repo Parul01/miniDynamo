@@ -7,21 +7,25 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.List;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.CRC32;
 
 // send to WALWriter to write to WAL
 //replay from Reader
 // do actual transactions
 public class WALService {
-
-    private int currentTxnId;          // active transaction
+     // active transaction
     private AtomicLong globalSeqNo;    // global sequence counter
     private WALWriter walWriter;       // writes to file
     private KVStore kvStore;           // in-memory DB
     private WALReader walReader;       // for recovery on startup
     private final String walPath;
+    private final Map<String, Lock> keyLocks;
     /*
     data/nodeA/wal.log
      */
@@ -33,66 +37,59 @@ public class WALService {
         this.kvStore = new KVStore();
 
         globalSeqNo = new AtomicLong(0);
-        currentTxnId = 0;
+        keyLocks = new ConcurrentHashMap<>();
         startup();
     }
 
     // TODO: need to make it synchronized
     public void put(String key, VersionedValue value) throws IOException {
 
-        long seqNo = globalSeqNo.incrementAndGet();
-        long checksum = computeCheckSum(currentTxnId + "|" + seqNo + "|" +
-                OperationType.PUT.name() + "|" + key + "|" + value);
-        WALEntry entry = new WALEntry.Builder()
-                .setSeqNo(seqNo)
-                .setTxnId(currentTxnId)
-                .setOperation(OperationType.PUT)
-                .setKey(key)
-                .setValue(value)
-                .setCheckSum(checksum).build();
+        Lock lock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
+        lock.lock();
+        try{
+            long seqNo = globalSeqNo.incrementAndGet();
+            long checksum = computeCheckSum( seqNo + "|" +
+                    OperationType.PUT.name() + "|" + key + "|" + value.getValue() + "|" + value.getCounter() + "|" +value.getNodeId()+"");
+            WALEntry entry = new WALEntry.Builder()
+                    .setSeqNo(seqNo)
+                    .setOperation(OperationType.PUT)
+                    .setKey(key)
+                    .setValue(value)
+                    .setCheckSum(checksum).build();
+            walWriter.append(entry);
+            // write to db
+            kvStore.put(key, value); // db is concurrent hashmap so no need of synchronized block
+        }finally {
+            lock.unlock();
+        }
 
-        walWriter.append(entry);
-
-        // write to db
-        kvStore.put(key, value); // db is concurrent hashmap so no need of synchronized block
     }
 
-    // creates new txnId
-    public void beginTransaction() {
-       currentTxnId++;
-    }
 
     public void delete(String key) throws IOException {
-        long seqNo = globalSeqNo.incrementAndGet();
-        long checksum = computeCheckSum(currentTxnId + "|" + seqNo + "|" +
-                OperationType.DELETE.name() + "|" + key + "|" + "");
-        WALEntry entry = new WALEntry.Builder()
-                .setSeqNo(seqNo)
-                .setTxnId(currentTxnId)
-                .setOperation(OperationType.DELETE)
-                .setKey(key)
-                .setValue(null)
-                .setCheckSum(checksum).build();
 
-        walWriter.append(entry);
+        Lock lock = keyLocks.computeIfAbsent(key, k -> new ReentrantLock());
 
-        // write to db
-        kvStore.remove(key);
+        lock.lock();
+        try{
+            long seqNo = globalSeqNo.incrementAndGet();
+            long checksum = computeCheckSum( seqNo + "|" +
+                    OperationType.DELETE.name() + "|" + key + "|" + "|"+ "|" + "");
+            WALEntry entry = new WALEntry.Builder()
+                    .setSeqNo(seqNo)
+                    .setOperation(OperationType.DELETE)
+                    .setKey(key)
+                    .setValue(null)
+                    .setCheckSum(checksum).build();
+            walWriter.append(entry);
+            kvStore.remove(key);
+
+        }finally {
+            lock.unlock();
+        }
+
     } // writes to WAL + KVStore
 
-    public void commit() throws IOException {
-        long seqNo = globalSeqNo.incrementAndGet();
-        long checksum = computeCheckSum(currentTxnId + "|" + seqNo + "|" +
-                OperationType.COMMIT.name() + "|" + "" + "|" + "");
-        WALEntry entry = new WALEntry.Builder()
-                .setSeqNo(seqNo)
-                .setTxnId(currentTxnId)
-                .setOperation(OperationType.COMMIT)
-                .setCheckSum(checksum).build();
-
-        walWriter.append(entry);
-
-    }// writes COMMIT to WAL
 
     public void startup() throws IOException {
 
@@ -101,8 +98,7 @@ public class WALService {
             ch.truncate(result.validBytes());
         }
 
-        currentTxnId = result.firstValue();
-        globalSeqNo.set(result.secondValue());
+        globalSeqNo.set(result.maxSeqNo());
         List<WALEntry> validTxns = result.entries();
 
         for (WALEntry w: validTxns){
@@ -131,5 +127,10 @@ public class WALService {
 
     public Optional<VersionedValue> get(String key){
         return kvStore.get(key);
+    }
+
+    public void close() throws IOException {
+        walWriter.close();
+        walReader.close();
     }
 }
