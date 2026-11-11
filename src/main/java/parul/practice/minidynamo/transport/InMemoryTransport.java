@@ -12,12 +12,12 @@ import java.util.concurrent.*;
 public class InMemoryTransport implements Transport {
 
     private final Map<String, RequestHandler> handlers;
-    private final Map<Node, Transport> transport;
+    private final InMemoryNetwork network;
     private final ExecutorService executor;
 
-    public InMemoryTransport(){
+    public InMemoryTransport(InMemoryNetwork network){
         handlers = new ConcurrentHashMap<>();
-        transport = new ConcurrentHashMap<>();
+        this.network = network;
         executor = Executors.newFixedThreadPool(10);
     }
     @Override
@@ -26,7 +26,7 @@ public class InMemoryTransport implements Transport {
 
             Response response = null;
             try {
-                response = transport.get(node).receive(request);
+                response = network.getTransport(node.getId()).receive(request);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

@@ -7,6 +7,7 @@ import parul.practice.minidynamo.storage.StorageEngine;
 import parul.practice.minidynamo.storage.VersionGenerator;
 import parul.practice.minidynamo.transport.RequestRouter;
 import parul.practice.minidynamo.transport.Transport;
+import parul.practice.minidynamo.transport.handler.WriteReplicaHandler;
 
 public class MiniDynamoServer {
     private final Node node;
@@ -25,7 +26,19 @@ public class MiniDynamoServer {
         this.versionGenerator = new VersionGenerator();
         this.coordinator = new Coordinator(storageEngine, transport, node.getId(), ring, this.versionGenerator);
         this.requestRouter = new RequestRouter(node.getId(),coordinator, transport, ring);
+        transport.registerHandler(
+                "replica/write",
+                new WriteReplicaHandler(
+                        storageEngine,
+                        node,
+                        versionGenerator
+                )
+        );
 
+    }
+
+    public RequestRouter getRequestRouter() {
+        return requestRouter;
     }
 
 }

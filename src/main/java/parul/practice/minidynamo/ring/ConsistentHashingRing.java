@@ -156,21 +156,32 @@ public class ConsistentHashingRing {
 
     public List<Node> getNodes(String key, int N){
         Set<Node> nodes = new HashSet<>();
+        List<Node> orderedList = new ArrayList<>();
         int k = ring.size();
+        int hashPos = hash(key);
+        Map.Entry<Integer, VirtualNode> entry = ring.ceilingEntry(hashPos);
+        if(entry == null){
+            entry = ring.firstEntry();
+        }
+        VirtualNode vn = entry.getValue();
+
 
         while(nodes.size() != N && k > 0){
-            int hashPos = hash(key);
-            Map.Entry<Integer, VirtualNode> entry = ring.ceilingEntry(hashPos);
+
+            if(!nodes.contains(vn.getParent())) {
+                orderedList.add(vn.getParent());
+            }
+            nodes.add(vn.getParent());
+            entry = ring.higherEntry(hash(vn.getVirtualId()));
             if(entry == null){
                 entry = ring.firstEntry();
             }
-            VirtualNode vn = entry.getValue();
-            nodes.add(vn.getParent());
-            key = vn.getVirtualId()+1;
+            vn = entry.getValue();
+            hashPos = entry.getKey();
+//            key = vn.getVirtualId()+1;
             k--;
         }
-        return nodes.stream().toList();
-
+        return orderedList;
 
     }
 
