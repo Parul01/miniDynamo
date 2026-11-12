@@ -1,4 +1,9 @@
-package parul.practice.minidynamo.storage;
+package parul.practice.minidynamo.storage.walService;
+
+import parul.practice.minidynamo.storage.KVStore;
+import parul.practice.minidynamo.storage.OperationType;
+import parul.practice.minidynamo.storage.RecoveryResult;
+import parul.practice.minidynamo.storage.VersionedValue;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;

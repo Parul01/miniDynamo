@@ -1,4 +1,4 @@
-package parul.practice.minidynamo.transport;
+package parul.practice.minidynamo.transport.handler;
 
 public enum ReplicaStatus {
     SUCCEEDED,

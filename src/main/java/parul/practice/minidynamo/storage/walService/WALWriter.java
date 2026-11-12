@@ -1,4 +1,6 @@
-package parul.practice.minidynamo.storage;
+package parul.practice.minidynamo.storage.walService;
+
+import parul.practice.minidynamo.storage.VersionedValue;
 
 import java.io.BufferedWriter;
 import java.io.FileOutputStream;

@@ -1,4 +1,4 @@
-package parul.practice.minidynamo.transport;
+package parul.practice.minidynamo.transport.network;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

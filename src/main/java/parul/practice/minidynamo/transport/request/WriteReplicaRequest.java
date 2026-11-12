@@ -1,7 +1,6 @@
 package parul.practice.minidynamo.transport.request;
 
 import parul.practice.minidynamo.storage.VersionedValue;
-import parul.practice.minidynamo.transport.Request;
 
 public class WriteReplicaRequest implements Request {
 

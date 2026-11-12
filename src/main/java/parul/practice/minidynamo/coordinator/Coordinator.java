@@ -3,10 +3,13 @@ package parul.practice.minidynamo.coordinator;
 import parul.practice.minidynamo.cluster.Node;
 import parul.practice.minidynamo.storage.StorageEngine;
 import parul.practice.minidynamo.storage.VersionGenerator;
-import parul.practice.minidynamo.transport.*;
 import parul.practice.minidynamo.ring.ConsistentHashingRing;
 import parul.practice.minidynamo.storage.VersionedValue;
+import parul.practice.minidynamo.transport.handler.ReplicaStatus;
+import parul.practice.minidynamo.transport.network.Transport;
 import parul.practice.minidynamo.transport.request.WriteReplicaRequest;
+import parul.practice.minidynamo.transport.response.Response;
+import parul.practice.minidynamo.transport.response.WriteResponse;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,7 +44,7 @@ public class Coordinator {
       return preferenceList;
   }
 
-  public boolean put(String key, String value) throws IOException {
+  public Response put(String key, String value) throws IOException {
       // Step 1 Compute preference list
 
 
@@ -76,8 +79,8 @@ public class Coordinator {
       CompletableFuture<Boolean> future = waitForAcks(futures, W, initialSuccess, initialFailure);
       try{
           boolean result = future.get(100, TimeUnit.MILLISECONDS);
-          if(result) return true;
-          return false;
+          if(result) return new WriteResponse(ReplicaStatus.SUCCEEDED);
+          return new WriteResponse(ReplicaStatus.FAILED);
       } catch (ExecutionException e) {
           throw new RuntimeException(e);
       } catch (InterruptedException e) {

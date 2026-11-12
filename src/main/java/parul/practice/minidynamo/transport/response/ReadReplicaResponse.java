@@ -1,8 +1,7 @@
 package parul.practice.minidynamo.transport.response;
 
 import parul.practice.minidynamo.storage.VersionedValue;
-import parul.practice.minidynamo.transport.ReplicaStatus;
-import parul.practice.minidynamo.transport.Response;
+import parul.practice.minidynamo.transport.handler.ReplicaStatus;
 
 public class ReadReplicaResponse implements Response {
     private final ReplicaStatus status;

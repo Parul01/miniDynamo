@@ -1,5 +1,7 @@
 package parul.practice.minidynamo.storage;
 
+import parul.practice.minidynamo.storage.walService.WALService;
+
 import java.io.IOException;
 import java.util.Optional;
 

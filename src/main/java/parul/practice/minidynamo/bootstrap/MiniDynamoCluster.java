@@ -4,9 +4,9 @@ import parul.practice.minidynamo.cluster.Node;
 import parul.practice.minidynamo.ring.ConsistentHashingRing;
 import parul.practice.minidynamo.server.MiniDynamoServer;
 import parul.practice.minidynamo.storage.StorageEngine;
-import parul.practice.minidynamo.storage.WALService;
-import parul.practice.minidynamo.transport.InMemoryNetwork;
-import parul.practice.minidynamo.transport.InMemoryTransport;
+import parul.practice.minidynamo.storage.walService.WALService;
+import parul.practice.minidynamo.transport.network.InMemoryNetwork;
+import parul.practice.minidynamo.transport.network.InMemoryTransport;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -74,6 +74,10 @@ public class MiniDynamoCluster {
             servers.add(server);
         }
 
+    }
+
+    public InMemoryNetwork getNetwork() {
+        return network;
     }
 
     public List<MiniDynamoServer> getServers() {

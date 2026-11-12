@@ -3,9 +3,8 @@ package parul.practice.minidynamo.transport.handler;
 import parul.practice.minidynamo.cluster.Node;
 import parul.practice.minidynamo.storage.StorageEngine;
 import parul.practice.minidynamo.storage.VersionGenerator;
-import parul.practice.minidynamo.transport.ReplicaStatus;
-import parul.practice.minidynamo.transport.Request;
-import parul.practice.minidynamo.transport.Response;
+import parul.practice.minidynamo.transport.request.Request;
+import parul.practice.minidynamo.transport.response.Response;
 import parul.practice.minidynamo.transport.request.WriteReplicaRequest;
 import parul.practice.minidynamo.transport.response.WriteReplicaResponse;
 
@@ -31,8 +30,8 @@ public class WriteReplicaHandler implements RequestHandler {
         // compare and set
 
         versionGenerator.observe(writeReplicaRequest.getVersionedValue().getCounter());
-        boolean flag = storageEngine.put(writeReplicaRequest.getKey(), writeReplicaRequest.getVersionedValue());
-        WriteReplicaResponse response;
+        boolean flag = storageEngine.put(writeReplicaRequest.getKey(), writeReplicaRequest.getVersionedValue()); // is this the correct counter to send
+
         if(flag) return new WriteReplicaResponse(ReplicaStatus.SUCCEEDED);
         return new WriteReplicaResponse(ReplicaStatus.FAILED);
 

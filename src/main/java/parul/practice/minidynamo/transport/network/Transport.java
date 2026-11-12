@@ -1,7 +1,9 @@
-package parul.practice.minidynamo.transport;
+package parul.practice.minidynamo.transport.network;
 
 import parul.practice.minidynamo.cluster.Node;
 import parul.practice.minidynamo.transport.handler.RequestHandler;
+import parul.practice.minidynamo.transport.request.Request;
+import parul.practice.minidynamo.transport.response.Response;
 
 
 import java.io.IOException;

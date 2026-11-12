@@ -1,7 +1,5 @@
 package parul.practice.minidynamo.transport.request;
 
-import parul.practice.minidynamo.transport.Request;
-
 public class ReadReplicaRequest implements Request {
     private final String key;
 

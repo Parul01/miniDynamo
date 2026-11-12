@@ -1,4 +1,7 @@
-package parul.practice.minidynamo.storage;
+package parul.practice.minidynamo.storage.walService;
+
+import parul.practice.minidynamo.storage.OperationType;
+import parul.practice.minidynamo.storage.VersionedValue;
 
 public class WALEntry {
 

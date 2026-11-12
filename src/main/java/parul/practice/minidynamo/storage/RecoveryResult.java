@@ -1,5 +1,7 @@
 package parul.practice.minidynamo.storage;
 
+import parul.practice.minidynamo.storage.walService.WALEntry;
+
 import java.util.List;
 
 public record RecoveryResult(
